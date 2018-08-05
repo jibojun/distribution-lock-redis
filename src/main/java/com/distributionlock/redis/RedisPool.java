@@ -16,7 +16,7 @@ public class RedisPool {
     /**
      * init a redis connection pool with configuration assigned in constants
      */
-    public static void initRedisPool(){
+    public static void initRedisPool() {
         JedisPoolConfig config = new JedisPoolConfig();
         config.setMaxTotal(RedisConstants.MAX_TOTAL);
         config.setMaxIdle(RedisConstants.MAX_IDLE);
@@ -24,7 +24,7 @@ public class RedisPool {
         config.setTestOnBorrow(RedisConstants.REDIS_TEST_ON_BORROW);
         config.setTestOnReturn(RedisConstants.REDIS_TEST_ON_RETURN);
         config.setBlockWhenExhausted(RedisConstants.REDIS_BLOCK_WHEN_EXHAUSTED);
-        pool=new JedisPool();
+        pool = new JedisPool();
     }
 
     private static JedisPool getPool() {
@@ -35,11 +35,11 @@ public class RedisPool {
         RedisPool.pool = pool;
     }
 
-    public static Jedis getConnResource(){
+    public static Jedis getConnResource() {
         return pool.getResource();
     }
 
-    public static void closeConnResource(Jedis jedis){
+    public static void closeConnResource(Jedis jedis) {
         jedis.close();
     }
 }
