@@ -1,7 +1,6 @@
 package com.distributionlock.lock;
 
 import com.distributionlock.redis.RedisUtil;
-import redis.clients.jedis.Jedis;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +25,13 @@ public class RedisDistributionLock extends AbstractDistributionLock {
 
     @Override
     public boolean isLocked() {
-        return false;
+        if (locked) {
+            return true;
+        } else {
+            //check whether it's expired
+            String value = RedisUtil.get(lockName);
+            return !checkTimeExpire(value);
+        }
     }
 
     @Override
@@ -34,15 +39,20 @@ public class RedisDistributionLock extends AbstractDistributionLock {
         long startTime = System.currentTimeMillis();
         long waitingTime = unit.toMillis(time);
         //try lock until it's time out while using time out
-        while (useTimeout ? !checkTimeOut(startTime, waitingTime) : true){
+        while (useTimeout ? !checkTimeOut(startTime, waitingTime) : true) {
             if (interrupt) {
                 checkThreadInterrupted();
             }
             //expire time point=current time+expire time
-            String expireTimePoint=String.valueOf(System.currentTimeMillis()+lockExpireTime);
-            //important, setnx, set if not existed, add lock
-
-
+            String expireTimePoint = String.valueOf(System.currentTimeMillis() + lockExpireTime);
+            //important, setnx, set if not existed, add lock, if the key is already here, means locking operation failed
+            if (RedisUtil.setnx(lockName, expireTimePoint) == 1) {
+                //expire time
+                RedisUtil.expire(lockName, Integer.parseInt(String.valueOf(lockExpireTime)));
+                this.locked = true;
+                setLockOwnerThread(Thread.currentThread());
+                return true;
+            }
         }
         return false;
     }
@@ -52,6 +62,7 @@ public class RedisDistributionLock extends AbstractDistributionLock {
         //check whether it's expired, unlock when it's not expired
         if (!checkTimeExpire(RedisUtil.get(lockName))) {
             RedisUtil.del(lockName);
+            this.locked = false;
         }
     }
 
