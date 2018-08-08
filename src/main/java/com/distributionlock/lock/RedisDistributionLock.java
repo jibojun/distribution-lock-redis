@@ -67,13 +67,14 @@ public class RedisDistributionLock extends AbstractDistributionLock {
         if (tryAddLock()) {
             return true;
         }
-        //
+        //when try add lock failed, get value from redis and check whether it's expired
         String value = RedisUtil.get(lockName);
-        if (value != null && checkTimeExpire(value)) {
-            //expire lock
+        if (value != null && checkTimeExpire(value)) {//expired lock, enter here
             //redis getset, set new value and return the old value, it's an atomic operation
             String oldValue = RedisUtil.getSet(lockName, expireTimePoint);
-            if (oldValue != null && checkTimeExpire(oldValue)) {
+            //suppose a lot of threads from different JVM try to get lock, every threads want to set a new value which is not expired
+            //if the returned old value is still equals to old value we got before, means getting lock successfully, otherwise, it means lock is got from other thread
+            if (oldValue != null && value.equalsIgnoreCase(oldValue)) {
                 locked = true;
                 setLockOwnerThread(Thread.currentThread());
                 return true;
