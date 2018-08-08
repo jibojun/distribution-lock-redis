@@ -67,19 +67,18 @@ public class RedisDistributionLock extends AbstractDistributionLock {
         if (tryAddLock()) {
             return true;
         }
-//        String value = jedis.get(lockKey);
-//        if (value != null && isTimeExpired(value)) {//锁是过期的
-//            //假设多个线程(非单jvm)同时走到这里
-//            String oldValue = jedis.getSet(lockKey, stringOfLockExpireTime);//原子操作
-//            // 但是走到这里时每个线程拿到的oldValue肯定不可能一样(因为getset是原子性的)
-//            // 假如拿到的oldValue依然是expired的，那么就说明拿到锁了
-//            if (oldValue != null && isTimeExpired(oldValue)) {//拿到锁
-//                //设置相关标识
-//                locked = true;
-//                setExclusiveOwnerThread(Thread.currentThread());
-//                return true;
-//            }
-//        }
+        //
+        String value = RedisUtil.get(lockName);
+        if (value != null && checkTimeExpire(value)) {
+            //expire lock
+            //redis getset, set new value and return the old value, it's an atomic operation
+            String oldValue = RedisUtil.getSet(lockName, expireTimePoint);
+            if (oldValue != null && checkTimeExpire(oldValue)) {
+                locked = true;
+                setLockOwnerThread(Thread.currentThread());
+                return true;
+            }
+        }
         return false;
     }
 
