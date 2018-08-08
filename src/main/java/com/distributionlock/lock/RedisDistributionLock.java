@@ -43,14 +43,8 @@ public class RedisDistributionLock extends AbstractDistributionLock {
             if (interrupt) {
                 checkThreadInterrupted();
             }
-            //expire time point=current time+expire time
-            String expireTimePoint = String.valueOf(System.currentTimeMillis() + lockExpireTime);
-            //important, setnx, set if not existed, add lock, if the key is already here, means locking operation failed
-            if (RedisUtil.setnx(lockName, expireTimePoint) == 1) {
-                //expire time
-                RedisUtil.expire(lockName, Integer.parseInt(String.valueOf(lockExpireTime)));
-                this.locked = true;
-                setLockOwnerThread(Thread.currentThread());
+            //add lock
+            if (tryAddLock()) {
                 return true;
             }
         }
@@ -68,7 +62,44 @@ public class RedisDistributionLock extends AbstractDistributionLock {
 
     @Override
     public boolean tryLock() {
-        return super.tryLock();
+        String expireTimePoint = String.valueOf(System.currentTimeMillis() + lockExpireTime);
+        //try add lock
+        if (tryAddLock()) {
+            return true;
+        }
+//        String value = jedis.get(lockKey);
+//        if (value != null && isTimeExpired(value)) {//锁是过期的
+//            //假设多个线程(非单jvm)同时走到这里
+//            String oldValue = jedis.getSet(lockKey, stringOfLockExpireTime);//原子操作
+//            // 但是走到这里时每个线程拿到的oldValue肯定不可能一样(因为getset是原子性的)
+//            // 假如拿到的oldValue依然是expired的，那么就说明拿到锁了
+//            if (oldValue != null && isTimeExpired(oldValue)) {//拿到锁
+//                //设置相关标识
+//                locked = true;
+//                setExclusiveOwnerThread(Thread.currentThread());
+//                return true;
+//            }
+//        }
+        return false;
+    }
+
+    /**
+     * add lock by redis setnx, setnx will return 1 when the KV is set successfully
+     *
+     * @return
+     */
+    private boolean tryAddLock() {
+        //expire time point=current time+expire time
+        String expireTimePoint = String.valueOf(System.currentTimeMillis() + lockExpireTime);
+        //important, setnx, set if not existed, add lock, if the key is already here, means locking operation failed
+        if (RedisUtil.setnx(lockName, expireTimePoint) == 1) {
+            //expire time
+            RedisUtil.expire(lockName, Integer.parseInt(String.valueOf(lockExpireTime)));
+            this.locked = true;
+            setLockOwnerThread(Thread.currentThread());
+            return true;
+        }
+        return false;
     }
 
     /**
