@@ -74,6 +74,7 @@ public class RedisDistributionLock extends AbstractDistributionLock {
             String oldValue = RedisUtil.getSet(lockName, expireTimePoint);
             //suppose a lot of threads from different JVM try to get lock, every threads want to set a new value which is not expired
             //if the returned old value is still equals to old value we got before, means getting lock successfully, otherwise, it means lock is got from other thread
+            //TODO: potenial issue, the value：expire time overwrote by other threads
             if (oldValue != null && value.equalsIgnoreCase(oldValue)) {
                 locked = true;
                 setLockOwnerThread(Thread.currentThread());
@@ -92,9 +93,10 @@ public class RedisDistributionLock extends AbstractDistributionLock {
         //expire time point=current time+expire time
         String expireTimePoint = String.valueOf(System.currentTimeMillis() + lockExpireTime);
         //important, setnx, set if not existed, add lock, if the key is already here, means locking operation failed
-        if (RedisUtil.setnx(lockName, expireTimePoint) == 1) {
-            //expire time
-            RedisUtil.expire(lockName, Integer.parseInt(String.valueOf(lockExpireTime)));
+        //TODO: use Jedis's set functions with 5 parameters to put SETNX, set expire time operations in 1 method/command and let it be atomic
+        if (RedisUtil.setNxWithExpireTime(lockName, expireTimePoint, Long.parseLong(String.valueOf(lockExpireTime))).equalsIgnoreCase("OK")) {
+//        if (RedisUtil.setnx(lockName, expireTimePoint) == 1) {
+//            RedisUtil.expire(lockName, Integer.parseInt(String.valueOf(lockExpireTime)));
             this.locked = true;
             setLockOwnerThread(Thread.currentThread());
             return true;
