@@ -53,8 +53,8 @@ public class RedisDistributionLock extends AbstractDistributionLock {
 
     @Override
     protected void unlock0() {
-        //check whether it's expired, unlock when it's not expired
-        if (!checkTimeExpire(RedisUtil.get(lockName))) {
+        //check whether it's expired, unlock when it's not expired，also only allow owner thread to unlock
+        if (Thread.currentThread() == getLockOwnerThread() && !checkTimeExpire(RedisUtil.get(lockName))) {
             RedisUtil.del(lockName);
             this.locked = false;
         }
