@@ -135,7 +135,7 @@ public class RedisUtil {
         String result = null;
         try {
             jedis = RedisPool.getConnResource();
-            result = jedis.set(key, value,"NX", "PX", time);
+            result = jedis.set(key, value,"NX", "EX", time);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
