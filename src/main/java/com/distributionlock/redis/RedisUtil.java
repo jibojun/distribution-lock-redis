@@ -122,5 +122,29 @@ public class RedisUtil {
         }
     }
 
+    /**
+     *set if not existed, set expire time, return SET command's status code, when it's successful, it will be OK
+     *
+     * @param key
+     * @param value
+     * @param time
+     * @return
+     */
+    public static String setNxWithExpireTime(String key, String value, long time){
+        Jedis jedis = null;
+        String result = null;
+        try {
+            jedis = RedisPool.getConnResource();
+            result = jedis.set(key, value,"NX", "PX", time);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+            return result;
+        }
+    }
+
 
 }
