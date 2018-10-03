@@ -17,19 +17,13 @@ public class RedisUtil {
      * @return
      */
     public static Long setnx(String key, String value) {
-        Jedis jedis = null;
         Long result = null;
-        try {
-            jedis = RedisPool.getConnResource();
+        try (Jedis jedis = RedisPool.getConnResource()) {
             result = jedis.setnx(key, value);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
     /**
@@ -39,19 +33,13 @@ public class RedisUtil {
      * @return
      */
     public static String get(String key) {
-        Jedis jedis = null;
         String result = null;
-        try {
-            jedis = RedisPool.getConnResource();
+        try (Jedis jedis = RedisPool.getConnResource()) {
             result = jedis.get(key);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
     /**
@@ -62,19 +50,13 @@ public class RedisUtil {
      * @return
      */
     public static String getSet(String key, String value) {
-        Jedis jedis = null;
         String result = null;
-        try {
-            jedis = RedisPool.getConnResource();
+        try (Jedis jedis = RedisPool.getConnResource()) {
             result = jedis.getSet(key, value);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
     /**
@@ -84,19 +66,13 @@ public class RedisUtil {
      * @return
      */
     public static Long del(String key) {
-        Jedis jedis = null;
         Long result = null;
-        try {
-            jedis = RedisPool.getConnResource();
+        try (Jedis jedis = RedisPool.getConnResource()) {
             result = jedis.del(key);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
     /**
@@ -107,43 +83,31 @@ public class RedisUtil {
      * @return
      */
     public static Long expire(String key, int seconds) {
-        Jedis jedis = null;
         Long result = null;
-        try {
-            jedis = RedisPool.getConnResource();
+        try (Jedis jedis = RedisPool.getConnResource()) {
             result = jedis.expire(key, seconds);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
     /**
-     *set if not existed, set expire time, return SET command's status code, when it's successful, it will be OK
+     * set if not existed, set expire time, return SET command's status code, when it's successful, it will be OK
      *
      * @param key
      * @param value
      * @param time
      * @return
      */
-    public static String setNxWithExpireTime(String key, String value, long time){
-        Jedis jedis = null;
+    public static String setNxWithExpireTime(String key, String value, long time) {
         String result = null;
-        try {
-            jedis = RedisPool.getConnResource();
-            result = jedis.set(key, value,"NX", "EX", time);
+        try (Jedis jedis = RedisPool.getConnResource()) {
+            result = jedis.set(key, value, "NX", "EX", time);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
-            return result;
         }
+        return result;
     }
 
 
